@@ -1,264 +1,214 @@
 import time
-import threading
 
 
-# ============================================
-# Factorial Function
-# Time Complexity: O(n)
-# ============================================
+class Medicine:
+    def __init__(self, medicine_id, name, category, price, quantity):
+        self.medicine_id = medicine_id
+        self.name = name
+        self.category = category
+        self.price = price
+        self.quantity = quantity
 
-def factorial(n):
+    def __str__(self):
+        return f"{self.medicine_id:<8} {self.name:<22} {self.category:<15} RM{self.price:<8.2f} {self.quantity:<8}"
 
-    result = 1
 
-    for i in range(1, n + 1):
-        result = result * i
+class HashTable:
+    def __init__(self, size):
+        self.size = size
+        self.table = [None] * size
 
-    return result
+    def hash_function(self, key):
+        return key % self.size
 
+    def insert(self, medicine):
+        index = self.hash_function(medicine.medicine_id)
+        start_index = index
 
-# ============================================
-# Function Used by Each Thread
-# ============================================
+        while self.table[index] is not None:
+            if self.table[index].medicine_id == medicine.medicine_id:
+                self.table[index] = medicine
+                return "updated"
 
-def threaded_factorial(n, results):
+            index = (index + 1) % self.size
 
-    results[n] = factorial(n)
+            if index == start_index:
+                return "full"
 
+        self.table[index] = medicine
+        return "inserted"
 
-# ============================================
-# Run Factorial Using Multithreading
-# ============================================
+    def search(self, medicine_id):
+        index = self.hash_function(medicine_id)
+        start_index = index
 
-def run_with_multithreading():
+        while self.table[index] is not None:
+            if self.table[index].medicine_id == medicine_id:
+                return self.table[index]
 
-    numbers = [50, 100, 200]
-    results = {}
-    threads = []
+            index = (index + 1) % self.size
 
-    start_time = time.perf_counter_ns()
+            if index == start_index:
+                break
 
-    for n in numbers:
+        return None
 
-        thread = threading.Thread(
-            target=threaded_factorial,
-            args=(n, results)
-        )
+    def display(self):
+        print("\n" + "=" * 78)
+        print("PHARMACY INVENTORY HASH TABLE")
+        print("=" * 78)
+        print(f"{'Bucket':<8} {'ID':<8} {'Medicine Name':<22} {'Category':<15} {'Price':<10} {'Qty':<8}")
+        print("-" * 78)
 
-        threads.append(thread)
-        thread.start()
+        for i, medicine in enumerate(self.table):
+            if medicine is None:
+                print(f"{i:<8} {'Empty':<8}")
+            else:
+                print(f"{i:<8} {medicine}")
 
-    for thread in threads:
-        thread.join()
+        print("=" * 78)
 
-    end_time = time.perf_counter_ns()
 
-    total_time = end_time - start_time
+def linear_array_search(array, medicine_id):
+    for medicine in array:
+        if medicine.medicine_id == medicine_id:
+            return medicine
+    return None
 
-    return total_time, results
 
+def performance_test(hash_table, medicine_array):
+    search_keys = [101, 105, 110, 115, 120, 999, 888, 777]
 
-# ============================================
-# Run Factorial Without Multithreading
-# ============================================
+    print("\n" + "=" * 78)
+    print("SEARCH PERFORMANCE COMPARISON")
+    print("=" * 78)
+    print("Search keys used:", search_keys)
+    print("-" * 78)
 
-def run_without_multithreading():
+    hash_start = time.perf_counter_ns()
+    for key in search_keys:
+        hash_table.search(key)
+    hash_end = time.perf_counter_ns()
+    hash_time = hash_end - hash_start
 
-    numbers = [50, 100, 200]
-    results = {}
+    array_start = time.perf_counter_ns()
+    for key in search_keys:
+        linear_array_search(medicine_array, key)
+    array_end = time.perf_counter_ns()
+    array_time = array_end - array_start
 
-    start_time = time.perf_counter_ns()
-
-    for n in numbers:
-        results[n] = factorial(n)
-
-    end_time = time.perf_counter_ns()
-
-    total_time = end_time - start_time
-
-    return total_time, results
-
-# ============================================
-# Display Factorial Result Preview
-# ============================================
-
-def show_factorial_preview(results):
-
-    print("\n")
-    print("=" * 100)
-    print("FACTORIAL RESULT PREVIEW".center(100))
-    print("=" * 100)
-
-    print(f"{'Number':<15}{'Factorial Preview'}")
-    print("-" * 100)
-
-    for n, value in results.items():
-
-        value_text = str(value)
-
-        if len(value_text) > 70:
-            preview = value_text[:70] + "..."
-        else:
-            preview = value_text
-
-        print(f"{str(n) + '!':<15}{preview}")
-
-    print("=" * 100)
-
-
-# ============================================
-# Run 10-Round Experiment
-# ============================================
-
-def run_experiment():
-
-    threaded_times = []
-    normal_times = []
-
-    print("\n")
-    print("=" * 90)
-    print("QUESTION 3: FACTORIAL MULTITHREADING EXPERIMENT".center(90))
-    print("=" * 90)
-    print("Numbers calculated : 50!, 100!, and 200!")
-    print("Testing rounds     : 10")
-    print("Time unit          : Nanoseconds")
-    print("=" * 90)
-
-    # ========================================
-    # Experiment 1: With Multithreading
-    # ========================================
-
-    print("\n")
-    print("=" * 90)
-    print("EXPERIMENT 1: WITH MULTITHREADING".center(90))
-    print("=" * 90)
-
-    print(f"{'Round':<15}{'Time Taken (ns)':<25}{'Status'}")
-    print("-" * 90)
-
-    for round_no in range(1, 11):
-
-        time_taken, threaded_results = run_with_multithreading()
-        threaded_times.append(time_taken)
-
-        print(f"{round_no:<15}{time_taken:<25}{'Completed'}")
-
-    threaded_average = sum(threaded_times) / len(threaded_times)
-
-    print("-" * 90)
-    print(f"{'Average':<15}{threaded_average:<25.2f}")
-    print("=" * 90)
-
-    # ========================================
-    # Experiment 2: Without Multithreading
-    # ========================================
-
-    print("\n")
-    print("=" * 90)
-    print("EXPERIMENT 2: WITHOUT MULTITHREADING".center(90))
-    print("=" * 90)
-
-    print(f"{'Round':<15}{'Time Taken (ns)':<25}{'Status'}")
-    print("-" * 90)
-
-    for round_no in range(1, 11):
-
-        time_taken, normal_results = run_without_multithreading()
-        normal_times.append(time_taken)
-
-        print(f"{round_no:<15}{time_taken:<25}{'Completed'}")
-
-    normal_average = sum(normal_times) / len(normal_times)
-
-    print("-" * 90)
-    print(f"{'Average':<15}{normal_average:<25.2f}")
-    print("=" * 90)
-
-# ============================================
-# Display Final Comparison
-# ============================================
-
-    print("\n")
-    print("=" * 90)
-    print("FINAL PERFORMANCE COMPARISON".center(90))
-    print("=" * 90)
-
-    print(f"{'Method':<35}{'Average Time (ns)':<25}{'Remarks'}")
-    print("-" * 90)
-
-    print(f"{'With Multithreading':<35}{threaded_average:<25.2f}{'3 Threads'}")
-    print(f"{'Without Multithreading':<35}{normal_average:<25.2f}{'Sequential'}")
-
-    print("-" * 90)
-
-    if threaded_average < normal_average:
-        print("\nResult:")
-        print("Multithreading completed the factorial calculation faster.")
+    print(f"{'Method':<25} {'Time Taken (ns)':<20}")
+    print("-" * 78)
+    print(f"{'Hash Table Search':<25} {hash_time:<20}")
+    print(f"{'Array Linear Search':<25} {array_time:<20}")
+    print("-" * 78)
+
+    if hash_time < array_time:
+        print("Result: Hash Table search is faster in this test.")
     else:
-        print("\nResult:")
-        print("Sequential execution completed the factorial calculation faster.")
+        print("Result: Array search is faster in this small test.")
 
-    print("\nAnalysis")
-    print("-" * 90)
-    print("• The factorial function performs repeated multiplication from 1 to n.")
-    print("• Therefore, its time complexity is O(n).")
-    print("• Python uses the Global Interpreter Lock (GIL),")
-    print("  which prevents multiple threads from executing")
-    print("  CPU-intensive tasks simultaneously.")
-    print("• Factorial calculation is CPU-bound, so")
-    print("  multithreading may not improve performance.")
-    print("• Multithreading is more suitable for I/O-bound")
-    print("  applications such as downloading files,")
-    print("  reading databases, or network communication.")
-
-    print("=" * 90)
-
-    show_factorial_preview(normal_results)
+    print("\nExplanation:")
+    print("Hash Table search is usually faster because it calculates the bucket index")
+    print("directly using a hash function. Array search checks records one by one.")
+    print("=" * 78)
 
 
-# ============================================
-# Main Menu
-# ============================================
+def load_sample_data(hash_table, medicine_array):
+    medicines = [
+        Medicine(101, "Paracetamol", "Tablet", 5.50, 100),
+        Medicine(102, "Cough Syrup", "Syrup", 12.00, 50),
+        Medicine(103, "Vitamin C", "Supplement", 18.90, 80),
+        Medicine(104, "Antacid", "Tablet", 7.20, 60),
+        Medicine(105, "Flu Medicine", "Capsule", 10.50, 70),
+        Medicine(106, "Eye Drops", "Liquid", 8.90, 40),
+        Medicine(107, "Pain Relief Gel", "Gel", 15.00, 30),
+        Medicine(108, "Allergy Tablet", "Tablet", 9.50, 90),
+        Medicine(109, "Multivitamin", "Supplement", 25.00, 45),
+        Medicine(110, "Antiseptic Cream", "Cream", 13.50, 35)
+    ]
+
+    for medicine in medicines:
+        hash_table.insert(medicine)
+        medicine_array.append(medicine)
+
 
 def print_menu():
+    print("\n" + "=" * 50)
+    print("LOCAL PHARMACY INVENTORY SYSTEM")
+    print("=" * 50)
+    print("1. Display All Medicines")
+    print("2. Insert New Medicine")
+    print("3. Search Medicine")
+    print("4. Compare Search Performance")
+    print("5. Exit")
+    print("=" * 50)
 
-    print("\n")
-    print("=" * 60)
-    print("FACTORIAL MULTITHREADING SYSTEM".center(60))
-    print("=" * 60)
-    print("1. Run Performance Experiment")
-    print("2. Exit")
-    print("=" * 60)
-
-
-# ============================================
-# Main Function
-# ============================================
 
 def main():
+    hash_table = HashTable(20)
+    medicine_array = []
+
+    load_sample_data(hash_table, medicine_array)
 
     while True:
-
         print_menu()
-
-        choice = input("Enter your choice (1-2): ")
+        choice = input("Enter your choice (1-5): ")
 
         if choice == "1":
-
-            run_experiment()
+            hash_table.display()
 
         elif choice == "2":
+            try:
+                print("\n--- Insert New Medicine ---")
+                medicine_id = int(input("Medicine ID: "))
+                name = input("Medicine Name: ")
+                category = input("Category: ")
+                price = float(input("Price (RM): "))
+                quantity = int(input("Quantity: "))
 
-            print("\nThank you for using the program.")
+                medicine = Medicine(medicine_id, name, category, price, quantity)
+                result = hash_table.insert(medicine)
+
+                if result == "inserted":
+                    medicine_array.append(medicine)
+                    print("\nMedicine inserted successfully.")
+                elif result == "updated":
+                    print("\nMedicine ID already exists. Record updated successfully.")
+                else:
+                    print("\nHash table is full. Cannot insert new medicine.")
+
+            except ValueError:
+                print("\nInvalid input. Please enter numbers for ID, price, and quantity.")
+
+        elif choice == "3":
+            try:
+                print("\n--- Search Medicine ---")
+                medicine_id = int(input("Enter Medicine ID: "))
+                result = hash_table.search(medicine_id)
+
+                if result:
+                    print("\nMedicine Found")
+                    print("-" * 78)
+                    print(f"{'ID':<8} {'Medicine Name':<22} {'Category':<15} {'Price':<10} {'Qty':<8}")
+                    print("-" * 78)
+                    print(result)
+                    print("-" * 78)
+                else:
+                    print("\nMedicine not found.")
+
+            except ValueError:
+                print("\nInvalid Medicine ID. Please enter number only.")
+
+        elif choice == "4":
+            performance_test(hash_table, medicine_array)
+
+        elif choice == "5":
+            print("\nThank you for using the Pharmacy Inventory System.")
             break
 
         else:
+            print("\nInvalid choice. Please enter 1 to 5 only.")
 
-            print("\nInvalid choice. Please enter 1 or 2.")
-
-
-# ============================================
-# Run Program
-# ============================================
 
 main()
